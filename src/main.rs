@@ -1,3 +1,4 @@
+use std::fmt;
 use std::io::stdin;
 use std::io::{stdout, Write};
 
@@ -19,6 +20,16 @@ impl Card {
     }
 }
 
+impl fmt::Debug for Card {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Card::Number(n) => write!(f, "{}", n),
+            Card::Rama => write!(f, "R"),
+        }
+    }
+}
+
+#[derive(Debug)]
 struct Player {
     point: u32,
     hands: Vec<Card>,
@@ -33,6 +44,7 @@ impl Player {
     }
 }
 
+#[derive(Debug)]
 struct Game {
     round: u32,
     deck: Vec<Card>,
@@ -83,10 +95,7 @@ fn main() {
     game.start_round();
 
     loop {
-        // TODO Debug表示
-        println!("round: {}", game.round);
-        println!("deck: {}", game.deck.len());
-        println!("=====");
+        println!("{:?}", game);
 
         println!("select action. ");
         print!(">> ");
