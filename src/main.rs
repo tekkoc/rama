@@ -102,6 +102,17 @@ impl Game {
         }
     }
 
+    fn play_card(self: &mut Self) {
+        let player = self.players.get_mut(self.turn as usize).unwrap();
+
+        // TODO 出す手札を指定するように
+        // TODO ルール通りの手札しか出せないように
+        // TODO 手札が空の場合
+
+        let card = player.hands.pop().unwrap();
+        self.field.push(card);
+    }
+
     fn end_turn(self: &mut Self) {
         // TODO 終了判定
         // TODO ラウンドを降りているプレイヤーを飛ばす
@@ -121,6 +132,8 @@ fn main() {
     loop {
         println!("{:?}", game);
 
+        // TODO プレイヤー向けの表示をする
+
         println!("select action. ");
         print!(">> ");
         stdout().flush().unwrap();
@@ -137,6 +150,7 @@ fn main() {
             }
             "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" => {
                 println!("play card!");
+                game.play_card();
                 game.end_turn();
             }
             "d" => {
