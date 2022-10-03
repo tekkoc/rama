@@ -53,7 +53,7 @@ struct Game {
     deck: Vec<Card>,
     field: Vec<Card>,
     players: Vec<Player>,
-    turn: usize,
+    turn: u32,
 }
 
 impl Game {
@@ -85,7 +85,7 @@ impl Game {
         let mut rng = rand::thread_rng();
         self.deck.shuffle(&mut rng);
 
-        self.turn = rng.gen_range(0..PLAYER_COUNT) as usize;
+        self.turn = rng.gen_range(0..PLAYER_COUNT);
 
         // 場に1枚出す
         let card = self.deck.pop().unwrap();
@@ -99,6 +99,16 @@ impl Game {
                 let card = self.deck.pop().unwrap();
                 player.hands.push(card);
             }
+        }
+    }
+
+    fn end_turn(self: &mut Self) {
+        // TODO 終了判定
+        // TODO ラウンドを降りているプレイヤーを飛ばす
+
+        self.turn += 1;
+        if self.turn == PLAYER_COUNT {
+            self.turn = 0;
         }
     }
 }
@@ -127,12 +137,15 @@ fn main() {
             }
             "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" => {
                 println!("play card!");
+                game.end_turn();
             }
             "d" => {
                 println!("draw!");
+                game.end_turn();
             }
             "p" => {
                 println!("pass!");
+                game.end_turn();
             }
             _ => {}
         }
