@@ -1,9 +1,12 @@
+use rand::prelude::*;
 use std::fmt;
 use std::io::stdin;
 use std::io::{stdout, Write};
 
 const PLAYER_COUNT: u32 = 3;
 const MAX_NUMBER: u32 = 6;
+const FIRST_CARD_COUNT: u32 = 6;
+const PER_CARD_COUNT: u32 = 8;
 
 enum Card {
     Number(u32),
@@ -48,7 +51,9 @@ impl Player {
 struct Game {
     round: u32,
     deck: Vec<Card>,
+    field: Vec<Card>,
     players: Vec<Player>,
+    turn: usize,
 }
 
 impl Game {
@@ -61,7 +66,9 @@ impl Game {
         Game {
             round: 0,
             deck: vec![],
+            field: vec![],
             players,
+            turn: 0,
         }
     }
 
@@ -70,20 +77,27 @@ impl Game {
 
         // デッキの作成
         for i in 1..=MAX_NUMBER + 1 {
-            for _ in 0..8 {
-                // TODO const
+            for _ in 0..PER_CARD_COUNT {
                 self.deck.push(Card::new(i as u32))
             }
         }
 
-        // TODO shuffle
+        let mut rng = rand::thread_rng();
+        self.deck.shuffle(&mut rng);
+
+        self.turn = rng.gen_range(0..PLAYER_COUNT) as usize;
+
+        // 場に1枚出す
+        let card = self.deck.pop().unwrap();
+        self.field.push(card);
 
         // 初期手札
         for i in 0..PLAYER_COUNT {
-            for _ in 0..6 {
-                // TODO const
+            let player = self.players.get_mut(i as usize).unwrap();
+
+            for _ in 0..FIRST_CARD_COUNT {
                 let card = self.deck.pop().unwrap();
-                self.players.get_mut(i as usize).unwrap().hands.push(card);
+                player.hands.push(card);
             }
         }
     }
