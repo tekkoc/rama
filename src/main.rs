@@ -38,6 +38,7 @@ impl fmt::Debug for Card {
 struct Player {
     point: u32,
     hands: Vec<Card>,
+    is_folded: bool,
 }
 
 impl Player {
@@ -45,7 +46,14 @@ impl Player {
         Player {
             point: 0,
             hands: vec![],
+            is_folded: false,
         }
+    }
+
+    fn reset(self: &mut Self) {
+        // ポイント以外をリセットする
+        self.hands = vec![];
+        self.is_folded = false;
     }
 }
 
@@ -75,7 +83,12 @@ impl Game {
     }
 
     fn start_round(self: &mut Self) {
+        for p in &mut self.players {
+            p.reset();
+        }
+
         // デッキの作成
+        self.deck = vec![];
         for i in 1..=MAX_NUMBER + 1 {
             for _ in 0..PER_CARD_COUNT {
                 self.deck.push(Card::new(i as u32))
@@ -129,6 +142,11 @@ impl Game {
         self.start_round();
     }
 
+    fn fold(self: &mut Self) {
+        let player = self.players.get_mut(self.turn as usize).unwrap();
+        player.is_folded = true;
+    }
+
     fn play_card(self: &mut Self) {
         let player = self.players.get_mut(self.turn as usize).unwrap();
 
@@ -141,8 +159,9 @@ impl Game {
     }
 
     fn is_end(self: &Self) -> bool {
-        // TODO 最後のプレイヤーが何もできなかった時
-        self.deck.is_empty() || self.players.iter().any(|p| p.hands.is_empty())
+        self.deck.is_empty()
+            || self.players.iter().any(|p| p.hands.is_empty())
+            || self.players.iter().all(|p| p.is_folded)
     }
 
     fn end_turn(self: &mut Self) {
@@ -153,9 +172,16 @@ impl Game {
 
         // TODO ラウンドを降りているプレイヤーを飛ばす
 
-        self.turn += 1;
-        if self.turn == PLAYER_COUNT {
-            self.turn = 0;
+        loop {
+            self.turn += 1;
+            if self.turn == PLAYER_COUNT {
+                self.turn = 0;
+            }
+
+            let player = self.players.get_mut(self.turn as usize).unwrap();
+            if !player.is_folded {
+                break;
+            }
         }
     }
 }
@@ -196,7 +222,7 @@ fn main() {
                 game.end_turn();
             }
             "p" => {
-                println!("pass!");
+                game.fold();
                 game.end_turn();
             }
             _ => {}
