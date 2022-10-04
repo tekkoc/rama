@@ -152,7 +152,8 @@ impl Game {
                     p.point -= 1;
                 }
             } else {
-                // TODO 種類だけ足す
+                // ユニークにする(事前にソート済み)
+                p.hands.dedup();
                 p.point += p.hands.iter().fold(0, |sum, c| {
                     sum + match c {
                         Card::Number(n) => n,
