@@ -157,8 +157,13 @@ impl Game {
         player.is_folded = true;
     }
 
-    fn play_card(self: &mut Self, target: String) -> Option<()> {
-        let player = self.players.get_mut(self.turn as usize).unwrap();
+    fn draw(self: &mut Self) -> Option<()> {
+        let player = self.players.get_mut(self.turn as usize)?;
+
+        let card = self.deck.pop()?;
+        player.hands.push(card);
+
+        Some(())
     }
 
     fn play_card(self: &mut Self, target: String) -> Option<()> {
@@ -242,7 +247,9 @@ fn main() {
                 }
             }
             "d" => {
-                game.end_turn();
+                if let Some(_) = game.draw() {
+                    game.end_turn();
+                }
             }
             "p" => {
                 game.fold();
