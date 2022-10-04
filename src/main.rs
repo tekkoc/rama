@@ -106,12 +106,14 @@ impl Game {
     }
 
     fn start_round(self: &mut Self) {
+        // 初期化
+        self.deck = vec![];
+        self.field = vec![];
         for p in &mut self.players {
             p.reset();
         }
 
         // デッキの作成
-        self.deck = vec![];
         for i in 1..=MAX_NUMBER + 1 {
             for _ in 0..PER_CARD_COUNT {
                 self.deck.push(Card::new(i as u32))
