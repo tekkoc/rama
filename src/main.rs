@@ -7,6 +7,8 @@ const PLAYER_COUNT: u32 = 3;
 const MAX_NUMBER: u32 = 6;
 const FIRST_CARD_COUNT: u32 = 6;
 const PER_CARD_COUNT: u32 = 8;
+const RAMA_PENALTY: u32 = 10;
+const BIG_POINT_TIP: u32 = 10;
 
 enum Card {
     Number(u32),
@@ -64,7 +66,7 @@ impl Game {
         }
 
         Game {
-            round: 0,
+            round: 1,
             deck: vec![],
             field: vec![],
             players,
@@ -73,8 +75,6 @@ impl Game {
     }
 
     fn start_round(self: &mut Self) {
-        self.round += 1;
-
         // デッキの作成
         for i in 1..=MAX_NUMBER + 1 {
             for _ in 0..PER_CARD_COUNT {
@@ -102,6 +102,33 @@ impl Game {
         }
     }
 
+    fn end_round(self: &mut Self) {
+        for p in &mut self.players {
+            // TODO 処理を移動する?
+
+            // 手札が空ならポイントを減らす
+            if p.hands.is_empty() {
+                if p.point >= BIG_POINT_TIP {
+                    p.point -= BIG_POINT_TIP;
+                } else if p.point > 0 {
+                    p.point -= 1;
+                }
+            } else {
+                p.point += p.hands.iter().fold(0, |sum, c| {
+                    sum + match c {
+                        Card::Number(n) => n,
+                        Card::Rama => &RAMA_PENALTY,
+                    }
+                });
+            }
+        }
+
+        // TODO ゲーム終了判定
+        self.round += 1;
+
+        self.start_round();
+    }
+
     fn play_card(self: &mut Self) {
         let player = self.players.get_mut(self.turn as usize).unwrap();
 
@@ -113,8 +140,17 @@ impl Game {
         self.field.push(card);
     }
 
+    fn is_end(self: &Self) -> bool {
+        // TODO 最後のプレイヤーが何もできなかった時
+        self.deck.is_empty() || self.players.iter().any(|p| p.hands.is_empty())
+    }
+
     fn end_turn(self: &mut Self) {
-        // TODO 終了判定
+        if self.is_end() {
+            self.end_round();
+            return;
+        }
+
         // TODO ラウンドを降りているプレイヤーを飛ばす
 
         self.turn += 1;
@@ -133,6 +169,8 @@ fn main() {
         println!("{:?}", game);
 
         // TODO プレイヤー向けの表示をする
+
+        // TODO プレイヤー以外のターンは自動で進行するように
 
         println!("select action. ");
         print!(">> ");
