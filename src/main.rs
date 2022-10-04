@@ -10,6 +10,7 @@ const PER_CARD_COUNT: u32 = 8;
 const RAMA_PENALTY: u32 = 10;
 const BIG_POINT_TIP: u32 = 10;
 
+#[derive(PartialEq, Eq)]
 enum Card {
     Number(u32),
     Rama,
@@ -147,15 +148,23 @@ impl Game {
         player.is_folded = true;
     }
 
-    fn play_card(self: &mut Self) {
+    fn play_card(self: &mut Self, target: String) -> Option<()> {
         let player = self.players.get_mut(self.turn as usize).unwrap();
 
-        // TODO 出す手札を指定するように
+        let card = match target.as_str() {
+            "1" | "2" | "3" | "4" | "5" | "6" => Some(Card::Number(target.parse().unwrap())),
+            "l" | "r" => Some(Card::Rama),
+            _ => None,
+        }?;
+
         // TODO ルール通りの手札しか出せないように
         // TODO 手札が空の場合
 
-        let card = player.hands.pop().unwrap();
+        let index = player.hands.iter().position(|c| c == &card)?;
+        player.hands.remove(index);
         self.field.push(card);
+
+        Some(())
     }
 
     fn is_end(self: &Self) -> bool {
@@ -169,8 +178,6 @@ impl Game {
             self.end_round();
             return;
         }
-
-        // TODO ラウンドを降りているプレイヤーを飛ばす
 
         loop {
             self.turn += 1;
@@ -206,19 +213,19 @@ fn main() {
         stdin()
             .read_line(&mut buffer)
             .expect("failed to read input");
+        let command = buffer.as_str().trim();
 
-        match buffer.as_str().trim() {
+        match command {
             "exit" => {
                 println!("good bye!");
                 break;
             }
             "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" => {
-                println!("play card!");
-                game.play_card();
-                game.end_turn();
+                if let Some(_) = game.play_card(command.to_string()) {
+                    game.end_turn();
+                }
             }
             "d" => {
-                println!("draw!");
                 game.end_turn();
             }
             "p" => {
