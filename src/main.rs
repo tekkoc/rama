@@ -24,6 +24,14 @@ impl Card {
             _ => panic!("failed create card"), // TODO error
         }
     }
+
+    fn next(&self) -> Card {
+        match self {
+            Card::Number(n) if n == &MAX_NUMBER => Card::Rama,
+            Card::Number(n) => Card::Number(n + 1),
+            Self::Rama => Card::Number(1),
+        }
+    }
 }
 
 impl fmt::Debug for Card {
@@ -128,6 +136,7 @@ impl Game {
                     p.point -= 1;
                 }
             } else {
+                // TODO 種類だけ足す
                 p.point += p.hands.iter().fold(0, |sum, c| {
                     sum + match c {
                         Card::Number(n) => n,
@@ -150,15 +159,22 @@ impl Game {
 
     fn play_card(self: &mut Self, target: String) -> Option<()> {
         let player = self.players.get_mut(self.turn as usize).unwrap();
+    }
+
+    fn play_card(self: &mut Self, target: String) -> Option<()> {
+        let player = self.players.get_mut(self.turn as usize)?;
 
         let card = match target.as_str() {
             "1" | "2" | "3" | "4" | "5" | "6" => Some(Card::Number(target.parse().unwrap())),
-            "l" | "r" => Some(Card::Rama),
+            "l" | "r" | "L" | "R" => Some(Card::Rama),
             _ => None,
         }?;
 
-        // TODO ルール通りの手札しか出せないように
-        // TODO 手札が空の場合
+        let top = self.field.last()?;
+
+        if card != *top && card != top.next() {
+            return None;
+        }
 
         let index = player.hands.iter().position(|c| c == &card)?;
         player.hands.remove(index);
