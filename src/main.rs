@@ -1,4 +1,5 @@
 use rand::prelude::*;
+use std::cmp::Ordering;
 use std::fmt;
 use std::io::stdin;
 use std::io::{stdout, Write};
@@ -10,7 +11,7 @@ const PER_CARD_COUNT: u32 = 8;
 const RAMA_PENALTY: u32 = 10;
 const BIG_POINT_TIP: u32 = 10;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Ord)]
 enum Card {
     Number(u32),
     Rama,
@@ -30,6 +31,19 @@ impl Card {
             Card::Number(n) if n == &MAX_NUMBER => Card::Rama,
             Card::Number(n) => Card::Number(n + 1),
             Self::Rama => Card::Number(1),
+        }
+    }
+}
+
+impl PartialOrd for Card {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (l, r) if l == r => Some(Ordering::Equal),
+            (_, Card::Rama) => Some(Ordering::Less),
+            (Card::Rama, _) => Some(Ordering::Greater),
+            (Card::Number(l), Card::Number(r)) if l < r => Some(Ordering::Less),
+            (Card::Number(l), Card::Number(r)) if l > r => Some(Ordering::Greater),
+            _ => None,
         }
     }
 }
@@ -121,6 +135,8 @@ impl Game {
                 let card = self.deck.pop().unwrap();
                 player.hands.push(card);
             }
+
+            player.hands.sort();
         }
     }
 
@@ -162,6 +178,7 @@ impl Game {
 
         let card = self.deck.pop()?;
         player.hands.push(card);
+        player.hands.sort();
 
         Some(())
     }
