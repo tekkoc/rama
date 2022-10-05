@@ -294,7 +294,7 @@ fn main() {
                         println!("good bye!");
                         break;
                     }
-                    "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" => {
+                    "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" | "L" | "R" => {
                         if let Some(_) = game.play_card(command.to_string()) {
                             game.end_turn();
                         }
