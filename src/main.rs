@@ -201,7 +201,23 @@ impl Game {
         player.is_folded = true;
     }
 
+    fn can_draw(self: &Self) -> bool {
+        // 一人ならドロー出来ない
+        let mut no_folded_count = 0;
+        for p in &self.players {
+            if !p.is_folded {
+                no_folded_count += 1;
+            }
+        }
+
+        no_folded_count > 1
+    }
+
     fn draw(self: &mut Self) -> Option<()> {
+        if !self.can_draw() {
+            return None;
+        }
+
         let player = self.players.get_mut(self.turn as usize)?;
 
         let card = self.deck.pop()?;
@@ -271,9 +287,8 @@ fn main() {
 
                 let player = game.get_turn_player();
                 if !player.is_human {
-                    if let Some(_) = game.draw() {
-                        game.end_turn();
-                    }
+                    game.fold();
+                    game.end_turn();
                     continue;
                 }
 
