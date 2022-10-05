@@ -59,14 +59,16 @@ impl fmt::Debug for Card {
 
 #[derive(Debug)]
 struct Player {
+    name: String,
     point: u32,
     hands: Vec<Card>,
     is_folded: bool,
 }
 
 impl Player {
-    fn new() -> Self {
+    fn new(name: String) -> Self {
         Player {
+            name,
             point: 0,
             hands: vec![],
             is_folded: false,
@@ -92,8 +94,9 @@ struct Game {
 impl Game {
     fn new() -> Self {
         let mut players = vec![];
-        for _ in 0..PLAYER_COUNT {
-            players.push(Player::new());
+        players.push(Player::new("Player".to_string()));
+        for i in 0..PLAYER_COUNT - 1 {
+            players.push(Player::new(format!("Npc{}", i + 1)));
         }
 
         Game {
@@ -171,6 +174,10 @@ impl Game {
         self.start_round();
     }
 
+    fn get_turn_player(self: &Self) -> &Player {
+        self.players.get(self.turn as usize).unwrap()
+    }
+
     fn fold(self: &mut Self) {
         let player = self.players.get_mut(self.turn as usize).unwrap();
         player.is_folded = true;
@@ -246,7 +253,8 @@ fn main() {
 
         // TODO プレイヤー以外のターンは自動で進行するように
 
-        println!("select action. ");
+        let player = game.get_turn_player();
+        println!("{} turn.", player.name);
         print!(">> ");
         stdout().flush().unwrap();
 
