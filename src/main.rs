@@ -83,7 +83,14 @@ impl Player {
 }
 
 #[derive(Debug)]
+enum State {
+    InGame,
+    Result,
+}
+
+#[derive(Debug)]
 struct Game {
+    state: State,
     round: u32,
     deck: Vec<Card>,
     field: Vec<Card>,
@@ -100,6 +107,7 @@ impl Game {
         }
 
         Game {
+            state: State::InGame,
             round: 1,
             deck: vec![],
             field: vec![],
@@ -168,10 +176,18 @@ impl Game {
             }
         }
 
-        // TODO ゲーム終了判定
-        self.round += 1;
+        let bottom_player = self
+            .players
+            .iter()
+            .max_by(|p1, p2| p1.point.cmp(&p2.point))
+            .unwrap();
+        if bottom_player.point >= 40 {
+            self.state = State::Result;
+        } else {
+            self.round += 1;
 
-        self.start_round();
+            self.start_round();
+        }
     }
 
     fn get_turn_player(self: &Self) -> &Player {
@@ -215,14 +231,14 @@ impl Game {
         Some(())
     }
 
-    fn is_end(self: &Self) -> bool {
+    fn is_turn_end(self: &Self) -> bool {
         self.deck.is_empty()
             || self.players.iter().any(|p| p.hands.is_empty())
             || self.players.iter().all(|p| p.is_folded)
     }
 
     fn end_turn(self: &mut Self) {
-        if self.is_end() {
+        if self.is_turn_end() {
             self.end_round();
             return;
         }
@@ -247,43 +263,57 @@ fn main() {
     game.start_round();
 
     loop {
-        println!("{:?}", game);
+        match game.state {
+            State::InGame => {
+                println!("{:?}", game);
 
-        // TODO プレイヤー向けの表示をする
+                // TODO プレイヤー向けの表示をする
 
-        // TODO プレイヤー以外のターンは自動で進行するように
+                // TODO プレイヤー以外のターンは自動で進行するように
 
-        let player = game.get_turn_player();
-        println!("{} turn.", player.name);
-        print!(">> ");
-        stdout().flush().unwrap();
+                let player = game.get_turn_player();
+                println!("{} turn.", player.name);
+                print!(">> ");
+                stdout().flush().unwrap();
 
-        let mut buffer = String::new();
-        stdin()
-            .read_line(&mut buffer)
-            .expect("failed to read input");
-        let command = buffer.as_str().trim();
+                let mut buffer = String::new();
+                stdin()
+                    .read_line(&mut buffer)
+                    .expect("failed to read input");
+                let command = buffer.as_str().trim();
 
-        match command {
-            "exit" => {
-                println!("good bye!");
-                break;
-            }
-            "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" => {
-                if let Some(_) = game.play_card(command.to_string()) {
-                    game.end_turn();
+                match command {
+                    "exit" => {
+                        println!("good bye!");
+                        break;
+                    }
+                    "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" => {
+                        if let Some(_) = game.play_card(command.to_string()) {
+                            game.end_turn();
+                        }
+                    }
+                    "d" => {
+                        if let Some(_) = game.draw() {
+                            game.end_turn();
+                        }
+                    }
+                    "p" => {
+                        game.fold();
+                        game.end_turn();
+                    }
+                    _ => {}
                 }
             }
-            "d" => {
-                if let Some(_) = game.draw() {
-                    game.end_turn();
+            State::Result => {
+                game.players.sort_by(|p1, p2| p1.point.cmp(&p2.point));
+
+                for (i, p) in game.players.iter().enumerate() {
+                    let rank = i + 1;
+                    println!("{}. [{}]: -{}pt.", rank, p.name, p.point);
                 }
+
+                return;
             }
-            "p" => {
-                game.fold();
-                game.end_turn();
-            }
-            _ => {}
         }
     }
 }
