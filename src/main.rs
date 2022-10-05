@@ -11,7 +11,7 @@ const PER_CARD_COUNT: u32 = 8;
 const RAMA_PENALTY: u32 = 10;
 const BIG_POINT_TIP: u32 = 10;
 
-#[derive(PartialEq, Eq, Ord, Clone, Copy)]
+#[derive(PartialEq, Eq, Ord, Clone, Copy, Debug)]
 enum Card {
     Number(u32),
     Rama,
@@ -48,7 +48,7 @@ impl PartialOrd for Card {
     }
 }
 
-impl fmt::Debug for Card {
+impl fmt::Display for Card {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Card::Number(n) => write!(f, "{}", n),
@@ -326,7 +326,33 @@ fn main() {
                     continue;
                 }
 
-                println!("{:?}", game);
+                println!("round: {}", game.round);
+
+                println!("--------------");
+
+                for p in &game.players {
+                    println!("{}: {} cards. {} pt.", p.name, p.hands.len(), p.point);
+                }
+
+                println!("--------------");
+
+                println!("deck: {}", game.deck.len());
+                println!("field: {}", game.field.last().unwrap());
+
+                println!("--------------");
+
+                for (i, p) in game.players.iter().enumerate() {
+                    if i != game.turn as usize {
+                        continue;
+                    }
+                    println!("player cards.");
+                    for c in &p.hands {
+                        print!("{} ", c);
+                    }
+                    println!("");
+                }
+
+                println!("--------------");
 
                 println!("{} turn.", player.name);
                 print!(">> ");
