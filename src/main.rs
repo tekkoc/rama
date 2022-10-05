@@ -11,7 +11,7 @@ const PER_CARD_COUNT: u32 = 8;
 const RAMA_PENALTY: u32 = 10;
 const BIG_POINT_TIP: u32 = 10;
 
-#[derive(PartialEq, Eq, Ord)]
+#[derive(PartialEq, Eq, Ord, Clone, Copy)]
 enum Card {
     Number(u32),
     Rama,
@@ -213,6 +213,39 @@ impl Game {
         no_folded_count > 1
     }
 
+    fn candidate(self: &Self) -> Vec<Card> {
+        let player = self.get_turn_player();
+        let top = self.field.last().unwrap();
+
+        vec![*top, top.next()]
+            .into_iter()
+            .filter(|t| player.hands.iter().any(|c| c == t))
+            .collect()
+    }
+
+    fn can_play(self: &Self, card: Card) -> bool {
+        if let Some(top) = self.field.last() {
+            card == *top || card == top.next()
+        } else {
+            false
+        }
+    }
+
+    fn auto_play(self: &mut Self) {
+        let candidate = self.candidate();
+
+        if !candidate.is_empty() {
+            let card = candidate[0];
+            self.play_card(card);
+        } else if self.can_draw() {
+            // TODO 他のプレイヤーの手札などを元にドローするか決める
+            self.draw();
+        } else {
+            self.fold();
+        }
+        self.end_turn();
+    }
+
     fn draw(self: &mut Self) -> Option<()> {
         if !self.can_draw() {
             return None;
@@ -227,20 +260,22 @@ impl Game {
         Some(())
     }
 
-    fn play_card(self: &mut Self, target: String) -> Option<()> {
-        let player = self.players.get_mut(self.turn as usize)?;
-
+    fn play_card_by_str(self: &mut Self, target: String) -> Option<()> {
         let card = match target.as_str() {
             "1" | "2" | "3" | "4" | "5" | "6" => Some(Card::Number(target.parse().unwrap())),
             "l" | "r" | "L" | "R" => Some(Card::Rama),
             _ => None,
         }?;
 
-        let top = self.field.last()?;
+        self.play_card(card)
+    }
 
-        if card != *top && card != top.next() {
+    fn play_card(self: &mut Self, card: Card) -> Option<()> {
+        if !self.can_play(card) {
             return None;
         }
+
+        let player = self.players.get_mut(self.turn as usize)?;
 
         let index = player.hands.iter().position(|c| c == &card)?;
         player.hands.remove(index);
@@ -287,8 +322,7 @@ fn main() {
 
                 let player = game.get_turn_player();
                 if !player.is_human {
-                    game.fold();
-                    game.end_turn();
+                    game.auto_play();
                     continue;
                 }
 
@@ -310,7 +344,7 @@ fn main() {
                         break;
                     }
                     "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" | "L" | "R" => {
-                        if let Some(_) = game.play_card(command.to_string()) {
+                        if let Some(_) = game.play_card_by_str(command.to_string()) {
                             game.end_turn();
                         }
                     }
