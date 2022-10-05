@@ -60,15 +60,17 @@ impl fmt::Debug for Card {
 #[derive(Debug)]
 struct Player {
     name: String,
+    is_human: bool,
     point: u32,
     hands: Vec<Card>,
     is_folded: bool,
 }
 
 impl Player {
-    fn new(name: String) -> Self {
+    fn new(name: String, is_human: bool) -> Self {
         Player {
             name,
+            is_human,
             point: 0,
             hands: vec![],
             is_folded: false,
@@ -101,9 +103,9 @@ struct Game {
 impl Game {
     fn new() -> Self {
         let mut players = vec![];
-        players.push(Player::new("Player".to_string()));
+        players.push(Player::new("Player".to_string(), true));
         for i in 0..PLAYER_COUNT - 1 {
-            players.push(Player::new(format!("Npc{}", i + 1)));
+            players.push(Player::new(format!("Npc{}", i + 1), false));
         }
 
         Game {
@@ -265,13 +267,18 @@ fn main() {
     loop {
         match game.state {
             State::InGame => {
-                println!("{:?}", game);
-
                 // TODO プレイヤー向けの表示をする
 
-                // TODO プレイヤー以外のターンは自動で進行するように
-
                 let player = game.get_turn_player();
+                if !player.is_human {
+                    if let Some(_) = game.draw() {
+                        game.end_turn();
+                    }
+                    continue;
+                }
+
+                println!("{:?}", game);
+
                 println!("{} turn.", player.name);
                 print!(">> ");
                 stdout().flush().unwrap();
