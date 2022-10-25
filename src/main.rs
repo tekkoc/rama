@@ -234,14 +234,21 @@ impl Game {
     fn auto_play(self: &mut Self) {
         let candidate = self.candidate();
 
+        let name = self.get_turn_player().name.clone();
+
         if !candidate.is_empty() {
             let card = candidate[0];
             self.play_card(card);
+
+            println!("{} plays [{}].", name, card);
         } else if self.can_draw() {
             // TODO 他のプレイヤーの手札などを元にドローするか決める
             self.draw();
+
+            println!("{} draws card.", name);
         } else {
             self.fold();
+            println!("{} fold.", name);
         }
         self.end_turn();
     }
@@ -310,6 +317,10 @@ impl Game {
     }
 }
 
+fn clear() {
+    print!("{}[2J", 27 as char);
+}
+
 fn main() {
     let mut game = Game::new();
 
@@ -318,15 +329,13 @@ fn main() {
     loop {
         match game.state {
             State::InGame => {
-                // TODO プレイヤー向けの表示をする
-
                 let player = game.get_turn_player();
                 if !player.is_human {
                     game.auto_play();
                     continue;
                 }
 
-                println!("round: {}", game.round);
+                println!("\n round: {}", game.round);
 
                 println!("--------------");
 
@@ -372,21 +381,28 @@ fn main() {
                     "1" | "2" | "3" | "4" | "5" | "6" | "l" | "r" | "L" | "R" => {
                         if let Some(_) = game.play_card_by_str(command.to_string()) {
                             game.end_turn();
+                            clear();
                         }
                     }
                     "d" => {
                         if let Some(_) = game.draw() {
                             game.end_turn();
+                            clear();
                         }
                     }
                     "p" => {
                         game.fold();
                         game.end_turn();
+                        clear();
                     }
                     _ => {}
                 }
             }
             State::Result => {
+                println!("\n==============");
+                println!("game end!");
+                println!("==============\n");
+
                 game.players.sort_by(|p1, p2| p1.point.cmp(&p2.point));
 
                 for (i, p) in game.players.iter().enumerate() {
