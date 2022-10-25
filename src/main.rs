@@ -363,7 +363,10 @@ fn main() {
 
                 println!("--------------");
 
-                println!("{} turn.", player.name);
+                println!(
+                    "{} turn. (1~6, r: play card. d: draw, f: fold, q: exit)",
+                    player.name
+                );
                 print!(">> ");
                 stdout().flush().unwrap();
 
@@ -374,7 +377,7 @@ fn main() {
                 let command = buffer.as_str().trim();
 
                 match command {
-                    "exit" => {
+                    "q" | "Q" | "exit" => {
                         println!("good bye!");
                         break;
                     }
@@ -384,13 +387,13 @@ fn main() {
                             clear();
                         }
                     }
-                    "d" => {
+                    "D" | "d" => {
                         if let Some(_) = game.draw() {
                             game.end_turn();
                             clear();
                         }
                     }
-                    "p" => {
+                    "P" | "p" | "F" | "f" => {
                         game.fold();
                         game.end_turn();
                         clear();
